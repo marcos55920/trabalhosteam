@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sequência Numérica 🎰</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: radial-gradient(circle at center, #222 0%, #000 100%);
+      font-family: 'Segoe UI', sans-serif;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    .slot-machine {
+      background: linear-gradient(180deg, #d4af37 0%, #a67c00 100%);
+      border: 5px solid #b8860b;
+      border-radius: 20px;
+      padding: 40px 60px;
+      box-shadow: 0 0 25px rgba(0,0,0,0.6);
+      text-align: center;
+      width: 600px;
+      transform: scale(1.2);
+      transition: box-shadow 0.4s ease, transform 0.4s ease;
+    }
+
+    /* 🔹 Título restaurado */
+    .slot-header {
+      background: black;
+      border-radius: 12px;
+      padding: 10px 0;
+      color: gold;
+      font-weight: bold;
+      font-size: 28px;
+      text-shadow: 0 0 10px gold;
+      margin-bottom: 25px;
+    }
+
+    .reels {
+      display: flex;
+      justify-content: space-between;
+      background: #fff;
+      border-radius: 12px;
+      border: 3px solid gold;
+      padding: 15px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+      margin-bottom: 10px;
+    }
+
+    .reel {
+      width: 120px;
+      height: 130px;
+      background: linear-gradient(180deg, #fff 0%, #ddd 100%);
+      color: #000;
+      font-size: 42px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: 2px solid #999;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .stop-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+    }
+
+    .stop-button, .button {
+      background: red;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 25px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255,0,0,0.6);
+      transition: transform 0.1s ease, background-color 0.2s ease;
+    }
+
+    .stop-button:hover, .button:hover {
+      background: #ff4d4d;
+    }
+
+    .button:active, .stop-button:active {
+      transform: scale(0.95);
+    }
+
+    .message {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: gold;
+      text-shadow: 0 0 10px #000;
+      transition: all 0.3s ease;
+    }
+
+    @keyframes winFlash {
+      0%,100% { box-shadow: 0 0 40px gold; }
+      50% { box-shadow: 0 0 80px #fff; }
+    }
+    .win {
+      animation: winFlash 1s infinite;
+      transform: scale(1.25);
+    }
+
+    @keyframes secondFlash {
+      0%,100% { box-shadow: 0 0 20px #c0c0c0; }
+      50% { box-shadow: 0 0 50px #ffbf00; }
+    }
+    .second {
+      animation: secondFlash 1.5s infinite;
+      transform: scale(1.15);
+    }
+
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background: gold;
+      top: 0;
+      left: 50%;
+      animation: fall linear forwards;
+      border-radius: 50%;
+      opacity: 0.9;
+    }
+    @keyframes fall {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(100vh) rotate(720deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="slot-machine" id="machine">
+    <div class="slot-header">🎰 Sequência Numérica 🎰</div> <!-- 🔹 título de volta -->
+
+    <div class="reels">
+      <div class="reel" id="reel1">0</div>
+      <div class="reel" id="reel2">0</div>
+      <div class="reel" id="reel3">0</div>
+    </div>
+
+    <div class="stop-buttons">
+      <button class="stop-button" id="stop1">Para</button>
+      <button class="stop-button" id="stop2">Para</button>
+      <button class="stop-button" id="stop3">Para</button>
+    </div>
+
+    <div class="message" id="message">Tente a sorte!</div>
+    <button class="button" id="spinButton">Girar</button>
+  </div>
+
+  <audio id="somVitoria" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="somGiro" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const reels = [
+      document.getElementById('reel1'),
+      document.getElementById('reel2'),
+      document.getElementById('reel3')
+    ];
+    const message = document.getElementById('message');
+    const button = document.getElementById('spinButton');
+    const somVitoria = document.getElementById('somVitoria');
+    const somGiro = document.getElementById('somGiro');
+
+    const stopButtons = [
+      document.getElementById('stop1'),
+      document.getElementById('stop2'),
+      document.getElementById('stop3')
+    ];
+
+    let intervals = [null, null, null];
+    let results = [0, 0, 0];
+    let spinning = false;
+    let stopped = [false, false, false];
+
+    document.body.addEventListener('click', () => {
+      [somVitoria, somGiro].forEach(s => {
+        s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
+      });
+    }, { once: true });
+
+    function randomNum() {
+      return Math.floor(Math.random() * 101);
+    }
+
+    function spawnConfetti() {
+      for (let i = 0; i < 40; i++) {
+        const conf = document.createElement('div');
+        conf.classList.add('confetti');
+        conf.style.left = Math.random() * 100 + 'vw';
+        conf.style.background = ['gold','#ffbf00','#fff'][Math.floor(Math.random()*3)];
+        conf.style.width = 5 + Math.random() * 10 + 'px';
+        conf.style.height = conf.style.width;
+        conf.style.animationDuration = 2 + Math.random()*3 + 's';
+        document.body.appendChild(conf);
+        setTimeout(() => conf.remove(), 5000);
+      }
+    }
+
+    function spin() {
+      if (spinning) return;
+      spinning = true;
+      stopped = [false, false, false];
+      message.textContent = "Girando... 🎲";
+      somGiro.currentTime = 0;
+      somGiro.loop = true;
+      somGiro.play();
+
+      for (let i = 0; i < 3; i++) {
+        intervals[i] = setInterval(() => {
+          reels[i].textContent = randomNum();
+        }, 100);
+      }
+    }
+
+    function stopReel(i) {
+      if (!spinning || stopped[i]) return;
+      stopped[i] = true;
+      clearInterval(intervals[i]);
+      results[i] = parseInt(reels[i].textContent);
+
+      if (stopped.every(v => v)) {
+        somGiro.pause();
+        somGiro.currentTime = 0;
+
+        const [a,b,c] = results;
+        if (a === b && b === c) {
+          message.textContent = `🎉 JACKPOT! Três iguais (${a})! 🥇`;
+          somVitoria.currentTime = 0;
+          somVitoria.play();
+          spawnConfetti();
+        } else if (a === b || a === c || b === c) {
+          message.textContent = `🥈 Parabéns! Você ficou em segundo lugar!`;
+          somVitoria.currentTime = 0;
+          somVitoria.play();
+        } else {
+          message.textContent = `Tente novamente: ${a}, ${b}, ${c}`;
+        }
+        spinning = false;
+      }
+    }
+
+    button.addEventListener('click', spin);
+    stopButtons.forEach((btn, i) => btn.addEventListener('click', () => stopReel(i)));
+  </script>
+</body>
+</html>
