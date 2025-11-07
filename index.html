@@ -2,19 +2,34 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=no, orientation=landscape" />
   <title>Sequência Numérica 🎰</title>
   <style>
-    body {
+    @media screen and (orientation: portrait) {
+      body {
+        transform: rotate(-90deg);
+        transform-origin: left top;
+        width: 100vh;
+        height: 100vw;
+        overflow-x: hidden;
+        position: absolute;
+        top: 100%;
+        left: 0;
+      }
+    }
+
+    body, html {
       margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
       background: radial-gradient(circle at center, #222 0%, #000 100%);
       font-family: 'Segoe UI', sans-serif;
       color: #fff;
-      overflow: hidden;
     }
 
     .slot-machine {
@@ -25,11 +40,13 @@
       box-shadow: 0 0 25px rgba(0,0,0,0.6);
       text-align: center;
       width: 600px;
-      transform: scale(1.2);
+      max-width: 95vw;
+      max-height: 90vh;
+      transform: scale(1);
       transition: box-shadow 0.4s ease, transform 0.4s ease;
+      box-sizing: border-box;
     }
 
-    /* 🔹 Título restaurado */
     .slot-header {
       background: black;
       border-radius: 12px;
@@ -65,6 +82,7 @@
       border-radius: 8px;
       border: 2px solid #999;
       box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+      user-select: none;
     }
 
     .stop-buttons {
@@ -84,6 +102,7 @@
       cursor: pointer;
       box-shadow: 0 0 10px rgba(255,0,0,0.6);
       transition: transform 0.1s ease, background-color 0.2s ease;
+      user-select: none;
     }
 
     .stop-button:hover, .button:hover {
@@ -101,6 +120,8 @@
       color: gold;
       text-shadow: 0 0 10px #000;
       transition: all 0.3s ease;
+      user-select: none;
+      min-height: 24px;
     }
 
     @keyframes winFlash {
@@ -131,6 +152,7 @@
       animation: fall linear forwards;
       border-radius: 50%;
       opacity: 0.9;
+      pointer-events: none;
     }
     @keyframes fall {
       0% { transform: translateY(0) rotate(0deg); }
@@ -140,7 +162,7 @@
 </head>
 <body>
   <div class="slot-machine" id="machine">
-    <div class="slot-header">🎰 Sequência Numérica 🎰</div> <!-- 🔹 título de volta -->
+    <div class="slot-header">🎰 Sequência Numérica 🎰</div>
 
     <div class="reels">
       <div class="reel" id="reel1">0</div>
@@ -187,9 +209,10 @@
     let spinning = false;
     let stopped = [false, false, false];
 
+    // Permite a ativação antecipada dos sons em dispositivos que exigem interação do usuário
     document.body.addEventListener('click', () => {
       [somVitoria, somGiro].forEach(s => {
-        s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
+        s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(() => {});
       });
     }, { once: true });
 
@@ -205,7 +228,7 @@
         conf.style.background = ['gold','#ffbf00','#fff'][Math.floor(Math.random()*3)];
         conf.style.width = 5 + Math.random() * 10 + 'px';
         conf.style.height = conf.style.width;
-        conf.style.animationDuration = 2 + Math.random()*3 + 's';
+        conf.style.animationDuration = 2 + Math.random() * 3 + 's';
         document.body.appendChild(conf);
         setTimeout(() => conf.remove(), 5000);
       }
@@ -237,7 +260,7 @@
         somGiro.pause();
         somGiro.currentTime = 0;
 
-        const [a,b,c] = results;
+        const [a, b, c] = results;
         if (a === b && b === c) {
           message.textContent = `🎉 JACKPOT! Três iguais (${a})! 🥇`;
           somVitoria.currentTime = 0;
@@ -259,3 +282,4 @@
   </script>
 </body>
 </html>
+
